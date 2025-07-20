@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HU Coin Game</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      color: #333;
+    }
+    .header {
+      background: #ffcb05;
+      padding: 20px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .coin-img {
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle, #ffcb05, #b58900);
+      border-radius: 50%;
+      margin: 20px auto 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 0 10px rgba(0,0,0,0.2);
+      cursor: pointer;
+    }
+    button {
+      padding: 12px 25px;
+      margin: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #ffcb05;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .menu {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      background: #eee;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0;
+    }
+    .menu button {
+      flex: 1;
+      font-size: 14px;
+      margin: 0 4px;
+    }
+    #tapLeft {
+      font-size: 16px;
+      margin-top: 8px;
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">Start Tapping</div>
+
+  <div onclick="tapCoin()">
+    <div class="coin-img">HU</div>
+  </div>
+  <div>Total Coins: <span id="coinCount">0</span></div>
+  <div id="tapLeft">Taps Left Today: 2000</div>
+
+  <div class="menu">
+    <button onclick="dailyLogin()">Daily Login</button>
+    <button onclick="showTask()">Tasks</button>
+    <button onclick="connectWallet()">Add Balance</button>
+    <button onclick="referUser()">Refer</button>
+  </div>
+
+  <script>
+    Telegram.WebApp.ready();
+    const tg = Telegram.WebApp;
+    tg.expand();
+
+    let coins = parseInt(localStorage.getItem('coins')) || 0;
+    let tapsToday = parseInt(localStorage.getItem('tapsToday')) || 0;
+    const maxTaps = 2000;
+
+    function updateDisplay() {
+      document.getElementById('coinCount').innerText = coins;
+      document.getElementById('tapLeft').innerText = `Taps Left Today: ${maxTaps - tapsToday}`;
+      localStorage.setItem('coins', coins);
+      localStorage.setItem('tapsToday', tapsToday);
+    }
+
+    function tapCoin() {
+      if (tapsToday < maxTaps) {
+        coins++;
+        tapsToday++;
+        updateDisplay();
+      } else {
+        alert("🚫 You've reached your daily tap limit!");
+      }
+    }
+
+    function dailyLogin() {
+      const today = new Date().toDateString();
+      const last = localStorage.getItem('lastLoginBonus');
+      if (last !== today) {
+        coins += 500;
+        localStorage.setItem('lastLoginBonus', today);
+        alert("✅ 500 Daily Login Coins Added!");
+        updateDisplay();
+      } else {
+        alert("⏳ Already claimed today!");
+      }
+    }
+
+    function generateReferralCode() {
+      const code = "HU" + Math.floor(100000 + Math.random() * 900000);
+      localStorage.setItem('refCode', code);
+      return code;
+    }
+
+    function referUser() {
+      const botUsername = "Hu_coin_bot";
+      const code = localStorage.getItem('refCode') || generateReferralCode();
+      const link = `https://t.me/${botUsername}?start=${code}`;
+      alert(`Your Referral Code: ${code}\n\nLink: ${link}`);
+      window.open(link, "_blank");
+    }
+
+    function showTask() {
+      alert("🔒 Task system only shows if admin has assigned one.");
+    }
+
+    function connectWallet() {
+      const popup = document.createElement("div");
+      popup.style.position = "fixed";
+      popup.style.top = "0";
+      popup.style.left = "0";
+      popup.style.width = "100%";
+      popup.style.height = "100%";
+      popup.style.background = "rgba(0, 0, 0, 0.5)";
+      popup.style.display = "flex";
+      popup.style.justifyContent = "center";
+      popup.style.alignItems = "center";
+      popup.style.zIndex = "9999";
+
+      const box = document.createElement("div");
+      box.style.background = "#fff";
+      box.style.padding = "20px";
+      box.style.borderRadius = "12px";
+      box.style.textAlign = "center";
+
+      const title = document.createElement("h3");
+      title.innerText = "Select Payment Option";
+      box.appendChild(title);
+
+      const options = [
+        { name: "TONKeeper", url: "https://app.tonkeeper.com/transfer/UQC99zdv7m6L6clPBzwG2hYQFxZExWc4YP4hkIq3HEyzOpgW" },
+        { name: "Binance", url: "https://www.binance.com" },
+        { name: "Bitget", url: "https://www.bitget.com/en/asset/TON" }
+      ];
+
+      options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.innerText = opt.name;
+        btn.style.margin = "10px";
+        btn.onclick = () => {
+          window.open(opt.url, "_blank");
+          document.body.removeChild(popup);
+        };
+        box.appendChild(btn);
+      });
+
+      const cancel = document.createElement("button");
+      cancel.innerText = "Cancel";
+      cancel.style.background = "#ccc";
+      cancel.onclick = () => document.body.removeChild(popup);
+      box.appendChild(cancel);
+
+      popup.appendChild(box);
+      document.body.appendChild(popup);
+    }
+
+    window.onload = updateDisplay;
+  </script>
+</body>
+</html>
